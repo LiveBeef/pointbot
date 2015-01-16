@@ -53,6 +53,7 @@ print('Loaded SQL Database')
 cur = sql.cursor()
  
 cur.execute('CREATE TABLE IF NOT EXISTS oldposts(ID TEXT)')
+cur.execute('CREATE TABLE IF NOT EXISTS postedthreads(ID TEXT, RESPONSE INT)')
 print('Loaded Completed table')
  
 sql.commit()
@@ -85,12 +86,20 @@ def scanSub():
                             parentauthor = parentcomment.author.name
                             if pauthor == sauthor and parentauthor != "checks_for_checks":
                                 if TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
-                                    if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-                                        print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
-                                        post.reply(REPLYSTRING)
+                                    cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
+                                    if not cur.fetchone():
+                                        if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+                                            print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
+                                            post.reply(REPLYSTRING)
+                                            cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
+                                            sql.commit()
                                 elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
-                                    print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
-                                    post.reply(REPLYSTRING2)
+                                    cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
+                                    if not cur.fetchone():
+                                        print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
+                                        post.reply(REPLYSTRING2)
+                                        cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
+                                        sql.commit()
                     except AttributeError:
                         print('Either commenter or OP is deleted. Skipping.')
  
