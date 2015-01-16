@@ -79,13 +79,18 @@ def scanSub():
                         pauthor = post.author.name
                         sauthor = submission.author.name
                         if pauthor == sauthor:
-                            if TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
-                                if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-                                    print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
-                                    post.reply(REPLYSTRING)
-                            elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
-                                print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
-                                post.reply(REPLYSTRING2)
+                            pauthor = post.author.name
+                            sauthor = submission.author.name
+                            parentcomment = r.get_info(thing_id=post.parent_id)
+                            parentauthor = parentcomment.author.name
+                            if pauthor == sauthor and parentauthor != "checks_for_checks":
+                                if TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
+                                    if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+                                        print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
+                                        post.reply(REPLYSTRING)
+                                elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
+                                    print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
+                                    post.reply(REPLYSTRING2)
                     except AttributeError:
                         print('Either commenter or OP is deleted. Skipping.')
  
