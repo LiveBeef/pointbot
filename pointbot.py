@@ -3,9 +3,9 @@ import praw # simple interface to the reddit API, also handles rate limiting of 
 import time
 import sqlite3
 import traceback
- 
+
 '''USER CONFIGURATION'''
- 
+
 USERNAME  = "checks_for_checks"
 #This is the bot's Username. In order to send mail, he must have some amount of Karma.
 PASSWORD  = "[REDACTED]"
@@ -32,86 +32,88 @@ MAXPOSTS = 100
 #This is how many posts you want to retrieve all at once. PRAW can download 100 at a time.
 WAIT = 50
 #This is how many seconds you will wait between cycles. The bot is completely inactive during this time.
- 
- 
+
+
 '''All done!'''
- 
- 
- 
- 
+
+
+
+
 WAITS = str(WAIT)
 try:
-    import bot #This is a file in my python library which contains my Bot's username and password. I can push code to Git without showing credentials
-    USERNAME = bot.uG
-    PASSWORD = bot.pG
-    USERAGENT = bot.aG
+	import bot #This is a file in my python library which contains my Bot's username and password. I can push code to Git without showing credentials
+	USERNAME = bot.uG
+	PASSWORD = bot.pG
+	USERAGENT = bot.aG
 except ImportError:
-    pass
- 
+	pass
+
 sql = sqlite3.connect('sql.db')
 print('Loaded SQL Database')
 cur = sql.cursor()
- 
+
 cur.execute('CREATE TABLE IF NOT EXISTS oldposts(ID TEXT)')
 cur.execute('CREATE TABLE IF NOT EXISTS postedthreads(ID TEXT, RESPONSE INT)')
 print('Loaded Completed table')
- 
+
 sql.commit()
- 
+
 r = praw.Reddit(USERAGENT)
 r.login(USERNAME, PASSWORD)
- 
+
 def scanSub():
-    print('Searching '+ SUBREDDIT + '.')
-    subreddit = r.get_subreddit(SUBREDDIT)
-    posts = subreddit.get_comments(limit=MAXPOSTS)
-    for post in posts:
-        pid = post.fullname
-        cur.execute('SELECT * FROM oldposts WHERE ID=?', [pid])
-        if not cur.fetchone():
-            if not post.is_root:
-                print('Parsing comment ' + pid)
-                submission = post.submission
-                if not submission.link_flair_text:
-                    submission.link_flair_text = ""
-                stitle = submission.title.lower()+' '+submission.link_flair_text.lower()
-                if TITLETAG == "" or TITLETAG.lower() in stitle:
-                    try:
-                        pauthor = post.author.name
-                        sauthor = submission.author.name
-                        if pauthor == sauthor:
-                            pauthor = post.author.name
-                            sauthor = submission.author.name
-                            parentcomment = r.get_info(thing_id=post.parent_id)
-                            parentauthor = parentcomment.author.name
-                            if pauthor == sauthor and parentauthor != "checks_for_checks":
-                                if TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
-                                    cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
-                                    if not cur.fetchone():
-                                        if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-                                            print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
-                                            post.reply(REPLYSTRING)
-                                            cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
-                                            sql.commit()
-                                elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
-                                    cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
-                                    if not cur.fetchone():
-                                        print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
-                                        post.reply(REPLYSTRING2)
-                                        cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
-                                        sql.commit()
-                    except AttributeError:
-                        print('Either commenter or OP is deleted. Skipping.')
- 
-            cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
-            sql.commit()
- 
- 
+	print('Searching '+ SUBREDDIT + '.')
+	subreddit = r.get_subreddit(SUBREDDIT)
+	posts = subreddit.get_comments(limit=MAXPOSTS)
+	for post in posts:
+		pid = post.fullname
+		cur.execute('SELECT * FROM oldposts WHERE ID=?', [pid])
+		if not cur.fetchone():
+			if not post.is_root:
+				print('Parsing comment ' + pid)
+				submission = post.submission
+				if not submission.link_flair_text:
+					submission.link_flair_text = ""
+				stitle = submission.title.lower()+' '+submission.link_flair_text.lower()
+				if TITLETAG == "" or TITLETAG.lower() in stitle:
+					try:
+						pauthor = post.author.name
+						sauthor = submission.author.name
+						if pauthor == sauthor:
+							pauthor = post.author.name
+							sauthor = submission.author.name
+							parentcomment = r.get_info(thing_id=post.parent_id)
+							parentauthor = parentcomment.author.name
+							if pauthor == sauthor and parentauthor != "checks_for_checks":
+								if TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
+									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
+									if not cur.fetchone():
+										if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+											print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
+											post.reply(REPLYSTRING)
+											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
+											sql.commit()
+								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
+									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
+									if not cur.fetchone():
+										print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
+										post.reply(REPLYSTRING2)
+										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
+										sql.commit()
+						else:
+							print('Skipping (not OP)')
+					except AttributeError:
+						print('Either commenter or OP is deleted. Skipping.')
+
+			cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
+			sql.commit()
+
+
 while True:
-    try:
-        scanSub()
-    except Exception as e:
-        traceback.print_exc()
-    print('Running again in ' + WAITS + ' seconds \n')
-    sql.commit()
-    time.sleep(WAIT)
+	try:
+		scanSub()
+	except Exception as e:
+		traceback.print_exc()
+	print('Running again in ' + WAITS + ' seconds \n')
+	sql.commit()
+	time.sleep(WAIT)
