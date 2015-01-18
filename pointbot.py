@@ -70,7 +70,7 @@ def scanSub():
 		cur.execute('SELECT * FROM oldposts WHERE ID=?', [pid])
 		if not cur.fetchone():
 			if not post.is_root:
-				print('Parsing comment ' + pid)
+				print('Parsing comment ' + pid + ' : ', end="")
 				submission = post.submission
 				if not submission.link_flair_text:
 					submission.link_flair_text = ""
@@ -93,6 +93,10 @@ def scanSub():
 											post.reply(REPLYSTRING)
 											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
 											sql.commit()
+										else:
+											print('Skipping (OP: antitrigger found)')
+									else:
+										print('Skipping (OP: previously messaged)')
 								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():
@@ -100,10 +104,16 @@ def scanSub():
 										post.reply(REPLYSTRING2)
 										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
 										sql.commit()
+									else:
+										print('Skipping (OP: previously messaged)')
+								else:
+									print('Skipping (OP: no triggers found)')
+							else:
+								print('Skipping (OP: replied to bot)')
 						else:
 							print('Skipping (not OP)')
 					except AttributeError:
-						print('Either commenter or OP is deleted. Skipping.')
+						print('Skipping (message or post is deleted)')
 
 			cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
 			sql.commit()
@@ -114,6 +124,6 @@ while True:
 		scanSub()
 	except Exception as e:
 		traceback.print_exc()
-	print('Running again in ' + WAITS + ' seconds \n')
+	print('Search complete, running again in ' + WAITS + ' seconds \n')
 	sql.commit()
 	time.sleep(WAIT)
