@@ -62,7 +62,7 @@ r = praw.Reddit(USERAGENT)
 r.login(USERNAME, PASSWORD)
 
 def scanSub():
-	print('Searching '+ SUBREDDIT + '.')
+	print('Searching /r/'+ SUBREDDIT + '...')
 	subreddit = r.get_subreddit(SUBREDDIT)
 	posts = subreddit.get_comments(limit=MAXPOSTS)
 	for post in posts:
@@ -89,7 +89,7 @@ def scanSub():
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():
 										if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-											print('Replying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
+											print('\nReplying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
 											post.reply(REPLYSTRING)
 											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
 											sql.commit()
@@ -100,7 +100,7 @@ def scanSub():
 								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():
-										print('Replying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
+										print('\nReplying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
 										post.reply(REPLYSTRING2)
 										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
 										sql.commit()
@@ -122,8 +122,8 @@ def scanSub():
 while True:
 	try:
 		scanSub()
+		print('Search complete, running again in ' + WAITS + ' seconds \n')
 	except Exception as e:
-		traceback.print_exc()
-	print('Search complete, running again in ' + WAITS + ' seconds \n')
+		print('EXCEPTION! Reddit servers unavailable. Trying again in ' + WAITS + ' seconds \n')
 	sql.commit()
 	time.sleep(WAIT)
