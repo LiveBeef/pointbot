@@ -115,7 +115,7 @@ def scanSub():
 					except AttributeError:
 						print('Skipping (message or post is deleted)')
 				else:
-					print('Not a [' + TITLETAG + '] post')
+					print('Not a ' + TITLETAG + ' post')
 			cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
 			sql.commit()
 
