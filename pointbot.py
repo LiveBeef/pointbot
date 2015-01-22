@@ -23,10 +23,12 @@ TRIGGERREQUIRED = True
 #If this is True, the comment must contain a trigger to post
 #If this is False, the comment will be posted as long as there are no anti-triggers
 #Anti-triggers will ALWAYS deny the post.
-ANTITRIGGERS = ["✓", "but", "wouldn't", "shouldn't", "couldn't", "?", "however", "edit", "fix"]
+ANTITRIGGERS = ["but", "wouldn't", "shouldn't", "couldn't", "?", "however", "edit", "fix"]
+CHECK = ["✓"]
 #These force the bot not to make the comment.
-REPLYSTRING = "If you're satisfied with a user's math answer, don't forget to reply to their comment with a\n\n> ✓\n\n#to award a request point! (Must make a new comment, can't edit into this one. Can't be indented, like the one in this message.) See the sidebar for more info!\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
+REPLYSTRING1 = "If you're satisfied with a user's math answer, don't forget to reply to their comment with a\n\n> ✓\n\n#to award a request point! (Must make a new comment, can't edit into this one. Can't be indented, like the one in this message.) See the sidebar for more info!\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
 REPLYSTRING2 = "#Did you mean to award a request point for another user's math? If so, please make a new reply (as in, don't change this one) to their comment with the checkmark unindented (without the '>' or bar in front of it). The indentation keeps the request point from being awarded. \n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
+REPLYSTRING3 = "#You're welcome!\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
 #This is the word you want to put in reply
 MAXPOSTS = 100
 #This is how many posts you want to retrieve all at once. PRAW can download 100 at a time.
@@ -80,36 +82,37 @@ def scanSub():
 						pauthor = post.author.name
 						sauthor = submission.author.name
 						if pauthor == sauthor:
-							pauthor = post.author.name
-							sauthor = submission.author.name
-							parentcomment = r.get_info(thing_id=post.parent_id)
-							parentauthor = parentcomment.author.name
-							if pauthor == sauthor and parentauthor != "checks_for_checks":
-								if any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
-									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
-									if not cur.fetchone():
-										print('\nReplying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
-										post.reply(REPLYSTRING2)
-										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 2])
-										sql.commit()
-									else:
-										print('Skipping (OP: previously messaged)')
-								elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
-									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
-									if not cur.fetchone():
-										if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-											print('\nReplying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
-											post.reply(REPLYSTRING)
-											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
-											sql.commit()
-										else:
-											print('Skipping (OP: antitrigger found)')
-									else:
-										print('Skipping (OP: previously messaged)')
-								else:
-									print('Skipping (OP: no triggers found)')
+							if any(chk.lower() in post.body.lower() for chk in CHECK):
+								print('OP: awarded RP, whitelisting from reply 1')
+								cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
+								sql.commit()
 							else:
-								print('Skipping (OP: replied to bot)')
+								#pauthor = post.author.name
+								#sauthor = submission.author.name
+								parentcomment = r.get_info(thing_id=post.parent_id)
+								parentauthor = parentcomment.author.name
+								if pauthor == sauthor and parentauthor != "checks_for_checks":
+									if any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
+										cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
+										if not cur.fetchone():
+											print('\nReplying to ' + pauthor + ', comment ' + pid + ', failed RP award (indented)')
+											fire(REPLYSTRING2, submission.id, 2)
+										else:
+											print('Skipping (OP: previously messaged)')
+									elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
+										cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
+										if not cur.fetchone():
+											if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+												print('\nReplying to ' + pauthor + ', comment ' + pid + ', thanked but no RP awarded')
+												fire(REPLYSTRING1, submission.id, 1)
+											else:
+												print('Skipping (OP: antitrigger found)')
+										else:
+											print('Skipping (OP: previously messaged)')
+									else:
+										print('Skipping (OP: no triggers found)')
+								else:
+									print('Skipping (OP: replied to bot)')
 						else:
 							print('Skipping (not OP)')
 					except AttributeError:
@@ -118,6 +121,11 @@ def scanSub():
 					print('Not a ' + TITLETAG + ' post')
 			cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
 			sql.commit()
+
+def fire(repstr, subID, replID):
+	post.reply(repstr)
+	cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [subID, replID])
+	sql.commit()
 
 
 while True:
