@@ -94,10 +94,15 @@ def scanSub():
 								elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():
-										if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-											fire(post, submission.id, 1, pauthor, pid)
+										if not any(check in post.body.lower() for check in CHECKS):
+											if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+												fire(post, submission.id, 1, pauthor, pid)
+											else:
+												print('Skipping (OP: antitrigger found)')
 										else:
-											print('Skipping (OP: antitrigger found)')
+											print('Skipping (OP: RP correctly awarded, whitelisting)')
+											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
+											sql.commit()
 									else:
 										print('Skipping (OP: previously messaged)')
 								else:
