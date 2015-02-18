@@ -23,7 +23,7 @@ TRIGGERREQUIRED = True
 #If this is True, the comment must contain a trigger to post
 #If this is False, the comment will be posted as long as there are no anti-triggers
 #Anti-triggers will ALWAYS deny the post.
-ANTITRIGGERS = ["but", "wouldn't", "shouldn't", "couldn't", "?", "however", "edit", "fix", "bot"]
+ANTITRIGGERS = ["but", "wouldn't", "shouldn't", "couldn't", "?", "however", "edit", "fix", "bot", "check"]
 CHECKS = ["✓"]
 #These force the bot not to make the comment.
 REPLYSTRING1 = "If you're satisfied with a user's math answer, don't forget to reply to their comment with a\n\n> ✓\n\nto award a request point! (Must make a new comment, can't edit into this one. Can't be indented, like the one in this message.) See the sidebar for more info!\n\n---\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
