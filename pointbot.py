@@ -16,7 +16,7 @@ SUBREDDIT = "Theydidthemath"
 #This is the sub or list of subs to scan for new posts. For a single sub, use "sub1". For multiple subreddits, use "sub1+sub2+sub3+..."
 TITLETAG = "[Request]"
 #If this is non-blank, then this string must be in the title or flair of the post to work
-TRIGGERS = ["thanks", "thank you", "awesome", "well done"]
+TRIGGERS = ["thanks", "thank you", "awesome", "well done", "cool"]
 TRIGGERS2 = ["&gt; ✓", "&gt;✓"]
 #These tell the bot to make the comment
 TRIGGERREQUIRED = True
@@ -81,31 +81,34 @@ def scanSub():
 						pauthor = post.author.name
 						sauthor = submission.author.name
 						if pauthor == sauthor:
-							pauthor = post.author.name
-							sauthor = submission.author.name
 							parentcomment = r.get_info(thing_id=post.parent_id)
 							parentauthor = parentcomment.author.name
-							if pauthor == sauthor and parentauthor != "checks_for_checks":
-								if any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
+							if parentauthor != "checks_for_checks":
+								if parentcomment.len() < 250:
+									print('Skipping: Parent too short')
+								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():
 										fire(post, submission.id, 2, pauthor, pid)
 									else:
-										print('Skipping (OP: previously messaged)')
+										print('Skipping (OP: Whitelist 2)')
+								elif any(check in post.body.lower() for check in CHECKS):
+									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
+									if not cur.fetchone():
+										print('Skipping (OP: RP correctly awarded, whitelisting)')
+										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
+										sql.commit()
+									else:
+										print('Skipping (OP: Whitelist 1)')
+								
+								elif any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
+									print('Skipping (OP: antitrigger found)')
 								elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():
-										if not any(check in post.body.lower() for check in CHECKS):
-											if not any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
-												fire(post, submission.id, 1, pauthor, pid)
-											else:
-												print('Skipping (OP: antitrigger found)')
-										else:
-											print('Skipping (OP: RP correctly awarded, whitelisting)')
-											cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
-											sql.commit()
+										fire(post, submission.id, 1, pauthor, pid)
 									else:
-										print('Skipping (OP: previously messaged)')
+										print('Skipping (OP: Whitelist 1)')
 								else:
 									print('Skipping (OP: no triggers found)')
 							else:
