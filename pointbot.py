@@ -84,9 +84,9 @@ def scanSub():
 							parentcomment = r.get_info(thing_id=post.parent_id)
 							parentauthor = parentcomment.author.name
 							if parentauthor != "checks_for_checks":
-								if parentcomment.len() < 250:
+								'''if parentcomment.len() < 250:
 									print('Skipping: Parent too short')
-								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
+								el'''if any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():
 										fire(post, submission.id, 2, pauthor, pid)
