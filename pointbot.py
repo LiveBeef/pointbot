@@ -86,39 +86,50 @@ def scanSub():
 							if parentauthor != "checks_for_checks":
 								if len(parentcomment.body) < 250:
 									print('Skipping: Parent too short')
+									log(0, pid, 'Skipped: Parent too short', submission.title, sauthor)
 								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():
 										fire(post, submission.id, 2, pauthor, pid)
+										log(1, pid, 'Failed RP award (indented)', submission.title, sauthor)
 									else:
 										print('Skipping (OP: Whitelist 2)')
-								elif any(check in post.body.lower() for check in CHECKS):
+										log(0, pid, 'Skipped: OP (Whitelist 2)', submission.title, sauthor)
+								elif any(check.lower() in post.body.lower() for check in CHECKS):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():
 										print('Skipping (OP: RP correctly awarded, whitelisting)')
 										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
 										sql.commit()
+										log(0, pid, 'Skipped: OP (RP correctly awarded, whitelisted)', submission.title, sauthor)
 									else:
 										print('Skipping (OP: Whitelist 1)')
-								
+										log(0, pid, 'Skipped: OP (Whitelist 1)', submission.title, sauthor)
 								elif any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):
 									print('Skipping (OP: antitrigger found)')
+									log(0, pid, 'Skipped: OP (Antitrigger found)', submission.title, sauthor)
 								elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():
 										fire(post, submission.id, 1, pauthor, pid)
+										log(1, pid, 'Thanked but no RP awarded', submission.title, sauthor)
 									else:
 										print('Skipping (OP: Whitelist 1)')
+										log(0, pid, 'Skipped: OP (Whitelist 1)', submission.title, sauthor)
 								else:
 									print('Skipping (OP: no triggers found)')
-							else:
+									log(0, pid, 'Skipped: OP (No triggers found)', submission.title, sauthor)
+							else: # TODO: Add handle for bot replies
 								print('Skipping (OP: replied to bot)')
+								log(0, pid, 'Skipped: OP (Replied to bot)', submission.title, sauthor)
 						else:
 							print('Skipping (not OP)')
-					except AttributeError:
-						print('Skipping (message or post is deleted)')
+							log(0, pid, 'Skipped: Not OP', submission.title, sauthor)
+					except Exception as e:
+						traceback.print_exc()
 				else:
 					print('Not a ' + TITLETAG + ' post')
+					log(0, pid, 'Skipped: Not a ' + TITLETAG + ' post', submission.title, sauthor)
 			cur.execute('INSERT INTO oldposts VALUES(?)', [pid])
 			sql.commit()
 
@@ -135,6 +146,15 @@ def fire(post, subID, replID, pauthor, pid):
 		pass
 	cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [subID, replID])
 	sql.commit()
+	
+def log(didFire, pid, action, stitle, sauthor):
+	if didFire == 0:
+		didFire = "   "
+	else:
+		didFire = " ! "
+	i = datetime.datetime.now()
+	with open('LogFile.txt', 'a') as LogFile:
+		LogFile.write(i.strftime('%Y/%m/%d %H:%M:%S') + didFire + pid + ' "' + stitle + '" by ' + sauthor + ' ' + action + '\n')
 
 while True:
 	try:
