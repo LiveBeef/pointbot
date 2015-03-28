@@ -27,7 +27,7 @@ ANTITRIGGERS = ["but", "wouldn't", "shouldn't", "couldn't", "?", "however", "edi
 CHECKS = ["✓"]
 #These force the bot not to make the comment.
 REPLYSTRING1 = "If you're satisfied with a user's math answer, don't forget to reply to their comment with a\n\n> ✓\n\nto award a request point! (Must make a new comment, can't edit into this one. Can't be indented, like the one in this message.) See the sidebar for more info!\n\n---\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
-REPLYSTRING2 = "Did you mean to award a request point for another user's math? If so, please make a new reply (as in, don't change this one) to their comment with the checkmark unindented (without the '>' or bar in front of it). The indentation keeps the request point from being awarded.\n\n---\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
+REPLYSTRING2 = "Did you mean to award a request point for another user's math? If so, please make a '''new''' reply (as in, '''don't change this one''') to their comment with the checkmark unindented (without the '>' or bar in front of it). The indentation keeps the request point from being awarded.\n\n---\n\n^^I ^^am ^^a ^^bot ^^run ^^by ^^/u/Livebeef, ^^please ^^let ^^him ^^know ^^if ^^I'm ^^acting ^^up!"
 #This is the word you want to put in reply
 MAXPOSTS = 100
 #This is how many posts you want to retrieve all at once. PRAW can download 100 at a time.
