@@ -55,11 +55,11 @@ cur = sql.cursor()
 
 cur.execute('CREATE TABLE IF NOT EXISTS oldposts(ID TEXT)')	# Table containing comments already parsed
 cur.execute('CREATE TABLE IF NOT EXISTS postedthreads(ID TEXT, RESPONSE INT)')	# Table containing two whitelists. An OP will be placed on one of these
-																				# whitelists if they are sent a corresponding string declared above.
-																				# It is not desirable to send the same OP the same message over and over
-																				# again, as one message informing them of the system and one message in
-																				# case they accidentally indent their checkmark is sufficient to cover
-																				# the bot's entire scope of purpose.
+										# whitelists if they are sent a corresponding string declared above.
+										# It is not desirable to send the same OP the same message over and over
+										# again, as one message informing them of the system and one message in
+										# case they accidentally indent their checkmark is sufficient to cover
+										# the bot's entire scope of purpose.
 print('Loaded Completed tables')
 
 sql.commit()
@@ -94,9 +94,9 @@ def scanSub():
 									print('Skipping: Parent too short')
 									log(0, pid, 'Skipped: Parent too short', submission.title, sauthor)
 								elif any(trig.lower() in post.body.lower() for trig in TRIGGERS2):	# First check: is there a trigger from TRIGGERS2 in the body?
-																									# Done in this order because indented checkmarks are always an
-																									# indicator that OP knows about the RP system and are happy with
-																									# a reply, but their RP was held up by TDTMbot's syntax
+																	# Done in this order because indented checkmarks are always an
+																	# indicator that OP knows about the RP system and are happy with
+																	# a reply, but their RP was held up by TDTMbot's syntax
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 2])
 									if not cur.fetchone():	# filters out OPs on whitelist 2
 										fire(post, submission.id, 2, pauthor, pid)
@@ -105,11 +105,11 @@ def scanSub():
 										print('Skipping (OP: Whitelist 2)')
 										log(0, pid, 'Skipped: OP (Whitelist 2)', submission.title, sauthor)
 								elif any(check.lower() in post.body.lower() for check in CHECKS):	# Second check: did OP correctly award a RP? This would eliminate
-																									# any use of the bot for the post and would land OP on whitelist 1
+																	# any use of the bot for the post and would land OP on whitelist 1
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():	# filters out OPs on whitelist 1; if they are not already
-															# on the list, they will be put on it as they have demonstrated
-															# knowledge of the RP system and how to correctly award one
+												# on the list, they will be put on it as they have demonstrated
+												# knowledge of the RP system and how to correctly award one
 										print('Skipping (OP: RP correctly awarded, whitelisting)')
 										cur.execute('INSERT INTO postedthreads VALUES(?, ?)', [submission.id, 1])
 										sql.commit()
@@ -118,13 +118,13 @@ def scanSub():
 										print('Skipping (OP: Whitelist 1)')
 										log(0, pid, 'Skipped: OP (Whitelist 1)', submission.title, sauthor)
 								elif any(atrig.lower() in post.body.lower() for atrig in ANTITRIGGERS):	# Third check: are there any antitriggers in the message body?
-																										# If defined above and present in the message body, these will
-																										# always cause the bot to pass over the comment.
+																	# If defined above and present in the message body, these will
+																	# always cause the bot to pass over the comment.
 									print('Skipping (OP: antitrigger found)')
 									log(0, pid, 'Skipped: OP (Antitrigger found)', submission.title, sauthor)
 								elif TRIGGERREQUIRED ==False or any(trig.lower() in post.body.lower() for trig in TRIGGERS):	# Fourth check: is there a trigger from TRIGGERS in the body?
-																																# Last check because there is the most amount of checks that
-																																# must be performed to determine if a reply is needed.
+																				# Last check because there is the most amount of checks that
+																				# must be performed to determine if a reply is needed.
 									cur.execute('SELECT * FROM postedthreads WHERE ID=? AND RESPONSE=?', [submission.id, 1])
 									if not cur.fetchone():	# filters out OPs on whitelist 1
 										fire(post, submission.id, 1, pauthor, pid)
